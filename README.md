@@ -1,10 +1,4 @@
-# blokus
-
-blokus in pygame because why not  
-
-
-
-## Rules:
+## Blokus rules:
 
 Your first piece must be placed in a corner. 
 For a two player game, this is restricted to the top-left and bottom-right
@@ -13,9 +7,7 @@ All pieces after that must be placed diagonally adjacent to one of your other pi
   
 You cannot place a piece directly adjacent to any of your other pieces, or overlapping any piece.
 
-Your score is based on the total number of tiles in the pieces you haven't played.  
-
-This version of the game does not give you a bonus for playing the 1-tile last.
+Your score is based on the total number of tiles in the pieces you haven't played.  For main rules, see Mattel.
 
   
 
