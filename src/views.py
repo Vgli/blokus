@@ -1,5 +1,5 @@
-import events as e
-import objects as o
+import src.events as e
+import src.objects as o
 import numpy as n
 from pygame import display, Surface, font, image, surfarray, Rect
 from os.path import join

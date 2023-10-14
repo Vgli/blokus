@@ -2,10 +2,10 @@
 
 import sys
 import pygame
-import events as e
-import controllers as c
-import views as v
-import objects as o
+import src.events as e
+import src.controllers as c
+import src.views as v
+import src.objects as o
 
 def init(evManager):
     o.createBoard()

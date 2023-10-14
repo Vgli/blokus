@@ -1,0 +1,15 @@
+AUTHORS.rst
+README.rst
+setup.cfg
+setup.py
+blokus/__init__.py
+blokus/blokus.py
+blokus/cli.py
+blokus.egg-info/PKG-INFO
+blokus.egg-info/SOURCES.txt
+blokus.egg-info/dependency_links.txt
+blokus.egg-info/entry_points.txt
+blokus.egg-info/not-zip-safe
+blokus.egg-info/requires.txt
+blokus.egg-info/top_level.txt
+tests/test_bokus.py
