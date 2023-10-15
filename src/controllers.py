@@ -1,7 +1,7 @@
 import pygame
 from pygame.key import *
-import src.events as e
-import src.objects as o
+from src import events as e
+from src import objects as o
 
 class MouseController:
     def __init__(self, evManager):

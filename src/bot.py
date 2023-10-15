@@ -76,6 +76,7 @@ def get_playable_conditions(matrix, color):
 
     # Check diagonally adjacent positions
     diagonals = [(-1, -1), (-1, 1), (1, -1), (1, 1)]
+    up_and_downs = [(0, -1), (0, 1), (-1, 0), (1, 0)]
     for i in range(rows):
         for j in range(cols):
             if matrix[i][j] == color:
@@ -83,8 +84,8 @@ def get_playable_conditions(matrix, color):
                 ## playable matrix
                 # Set the current position to 1 # Check left, right, top, and bottom positions
                 playable_matrix[i][j] = 1
-                for x, y in [(0, -1), (0, 1), (-1, 0), (1, 0)]:
-                    new_i, new_j = i + x, j + y
+                for a, b in up_and_downs:
+                    new_i, new_j = i + a, j + b
                     if 0 <= new_i < rows and 0 <= new_j < cols:
                         playable_matrix[new_i][new_j] = 1
                         
@@ -93,13 +94,15 @@ def get_playable_conditions(matrix, color):
                     new_i, new_j = i + x, j + y
                     if 0 <= new_i < rows and 0 <= new_j < cols:
                         if matrix[new_i][new_j] == 0:
+                            append = True
+                            for a, b in [(0, -1), (0, 1), (-1, 0), (1, 0)]:
                             # Check for valid corners
-                            if (
-                                0 <= new_i + x < rows
-                                and 0 <= new_j + y < cols
-                                and matrix[new_i + x][new_j + y] != color
-                                and matrix[new_i][new_j + y] != color
-                            ):
+                                if 0 <= new_i+a < rows and 0 <= new_j+b < cols:
+                                    if matrix[new_i+a][new_j+b] == color:
+                                        append = False
+                                        break
+
+                            if append:
                                 playable_pos.append((new_i, new_j))
 
             if matrix[i][j] != 0:
@@ -138,55 +141,14 @@ def get_available_actions(matrix, player):
                                     
     return possible_pieces, possible_places, possible_plays_indices
 
-def get_playable_pos(matrix, color):
-    """
-    Finds playable positions for the given player color on the game board.
-
-    Parameters:
-    - matrix (list of lists): The game board represented as a matrix of Cell objects.
-    - color (int): The color identifier of the player for whom playable positions are being determined.
-
-    Returns:
-    - list of tuples: A list of (row, column) tuples representing valid positions where the player can place their pieces.
-    """
-
-    rows, cols = len(matrix), len(matrix[0])
-    playable_pos = []
-
-    # Check diagonally adjacent positions
-    diagonals = [(-1, -1), (-1, 1), (1, -1), (1, 1)]
-    for i in range(rows):
-        for j in range(cols):
-            if matrix[i][j] == color:
-                for x, y in diagonals:
-                    new_i, new_j = i + x, j + y
-                    if 0 <= new_i < rows and 0 <= new_j < cols:
-                        if matrix[new_i][new_j] == 0:
-                            # Check for valid corners
-                            if (
-                                0 <= new_i + x < rows
-                                and 0 <= new_j + y < cols
-                                and matrix[new_i + x][new_j + y] != color
-                                and matrix[new_i][new_j + y] != color
-                            ):
-                                playable_pos.append((new_i, new_j))
-    
-    # Check board corners if no valid corners found
-    if not playable_pos:
-        corners = [(0, 0), (0, cols - 1), (rows - 1, 0), (rows - 1, cols - 1)]
-        for i, j in corners:
-            if matrix[i][j] == 0:
-                playable_pos.append((i, j))
-                break
-    
-    return playable_pos
 
 ####################################################### REWARDS
 
 def get_number_of_blocked_corners(old_matrix, new_matrix, color):
     """Returns the number of blocked corners for a player after a given move is played"""
     #return len(get_playable_pos(old_matrix,color))-len(get_playable_pos(new_matrix,color))
-    return len(get_playable_pos(old_matrix,color))-len(get_playable_pos(new_matrix,color))
+
+    return len(get_playable_conditions(old_matrix,color)[1])-len(get_playable_conditions(new_matrix,color)[1])
 
 def matrix_with_placed_piece(matrix, absolute_coords, color):
 
@@ -251,12 +213,36 @@ def play_coordinates(pkey,pindex,absolute_coords, player, board):
     player.removePiece(pkey,pindex)
 
 def selectBotMove(board, player):
-    possible_pieces, possible_places, possible_plays_indices = get_available_actions(board, player)
 
-    #random play right now.
-    rand_index = random_index(possible_plays_indices)
-    pkey,pindex = possible_plays_indices[rand_index]
-    absolute_coords = possible_places[rand_index]
-    play_coordinates(pkey,pindex,absolute_coords,player,board)
+    weights = [10,10,1]
+    
+    if not player.isDone:
+        matrix = convert_matrix_to_nparray(board.matrix)
+        possible_pieces, possible_places, possible_plays_indices = get_available_actions(matrix, player)
+        if len(possible_plays_indices) == 0:
+            player.isDone = True
+        else:
+            # Random play right now.
+            best = 0
+            choice = 0
+            best_reward = None
+
+            for i in range(len(possible_places)):
+                reward = estimate_rewards(matrix, possible_places[i], convert_color_to_number(player.c))
+                current_sum = sum([x * y for x, y in zip(weights, reward)])
+                if current_sum > best:
+                    choice = i
+                    best = current_sum
+                    best_reward = reward
+            print(best_reward)
+            # rand_index = bot.random_index(possible_plays_indices)
+            pkey, pindex = possible_plays_indices[choice]
+            absolute_coords = possible_places[choice]
+
+            play_coordinates(pkey, pindex, absolute_coords, player, board)
+            if len(player.pieces) == 0:
+                player.isDone = True
+
+
                 
                                                     

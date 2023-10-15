@@ -2,9 +2,6 @@ AUTHORS.rst
 README.rst
 setup.cfg
 setup.py
-blokus/__init__.py
-blokus/blokus.py
-blokus/cli.py
 blokus.egg-info/PKG-INFO
 blokus.egg-info/SOURCES.txt
 blokus.egg-info/dependency_links.txt
