@@ -137,7 +137,7 @@ class Player:
         self.pieces = dict()
         self.score = 0
         self.pos = np.array([0,0])
-        with open("pieces.blok", "r") as f:
+        with open("data/pieces.blok", "r") as f:
             for line in f:
                 l = eval(line.rstrip())
                 if isinstance(l,int):
