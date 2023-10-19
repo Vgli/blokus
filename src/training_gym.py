@@ -50,8 +50,9 @@ while run:
                 # rand_index = bot.random_index(possible_plays_indices)
                 pkey, pindex = possible_plays_indices[choice]
                 absolute_coords = possible_places[choice]
+                piece_played = possible_pieces[choice]
 
-                bot.play_coordinates(pkey, pindex, absolute_coords, player, board)
+                bot.play_coordinates(pkey, pindex, absolute_coords, piece_played, player, board)
                 if len(player.pieces) == 0:
                     player.isDone = True
 

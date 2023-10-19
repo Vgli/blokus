@@ -1,6 +1,7 @@
 import numpy as np
 from src import events as e
 from src import bot
+import copy
 
 class LinkedGridNode:
     def __init__(self, u, l, pos):
@@ -153,6 +154,7 @@ class Player:
         self.curPieceKey = 1
         self.hasntPlayed = True
         self.isDone = False
+        self.all_playable_moves = bot.get_all_playable_moves('data/all_playable_moves.json')
     def setPos(self, pos):
         self.pos = pos
     def getPiece(self, num):
@@ -219,6 +221,10 @@ class Player:
         else:
             del self.pieces[pKey]
             self.getPiece(1)
+
+    def updateAllMoves(self,tuple_piece_to_remove):
+        for key in self.all_playable_moves.keys():
+            self.all_playable_moves[key] = [sublist for sublist in self.all_playable_moves[key] if sublist[0] != list(tuple_piece_to_remove)]
 
     def performBotAction(self):
         bot.selectBotMove(board, self)

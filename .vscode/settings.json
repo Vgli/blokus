@@ -1,5 +1,3 @@
 {
-    "python.pythonPath" : "C:\\Users\\Admin\\miniconda3\\envs\\blokus\\python.exe",
-    “python.terminal.activateEnvironment”: true,
-    “terminal.integrated.shell.windows”: “C:\\Windows\\System32\\cmd.exe”,
+    "jupyter.notebookFileRoot": "${C:/Users/Admin/Documents/GitHub/blokus/}"
 }
