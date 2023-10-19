@@ -101,7 +101,7 @@ def check_absolute_coordinates(matrix, absolute_coords):
                 else:
                     playable = False
                     break   # Coordinates are out of the board range
-    return True  # All specified positions are empty
+    return playable  # All specified positions are empty
 
 
 ################################################# GENERATE Play
@@ -161,12 +161,17 @@ def get_available_actions(matrix, player):
     possible_pieces = []
     playable_board, playable_pos = get_playable_conditions(matrix,convert_color_to_number(player.c))
     for position in playable_pos:
-        for move in player.all_playable_moves[position]:
+        to_pop = []
+        for i, move in enumerate(player.all_playable_moves[position]):
             absolute_coords = move[1]
             if check_absolute_coordinates(playable_board, absolute_coords):
                 possible_places.append(absolute_coords)
                 possible_plays_indices.append(move[0])
                 possible_pieces.append(move[2])
+            else:
+                to_pop.append(i)
+        for i in reversed(to_pop):
+            player.all_playable_moves[position].pop(i)
                                     
     return possible_places, possible_plays_indices, possible_pieces
 
