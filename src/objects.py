@@ -1,7 +1,6 @@
 import numpy as np
 from src import events as e
 from src import bot
-import copy
 
 class LinkedGridNode:
     def __init__(self, u, l, pos):
