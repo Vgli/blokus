@@ -8,6 +8,8 @@ import views as v
 from os.path import join
 import controllers as c
 import sys
+import time
+import icecream as ic
 
 board = o.LinkedGrid(20,20, 20)
 players = []
@@ -17,8 +19,20 @@ for p in range(4):
 
 
 run = True
-weights = [1,1,10]
+weights = [10,10,1]
 turn = 0
+
+def choose_move(matrix, possible_places, color):
+    best = 0
+    choice = 0          
+    for i in range(len(possible_places)):
+        reward = bot.estimate_rewards(matrix, possible_places[i], color)
+        current_sum = sum([x * y for x, y in zip(weights, reward)])
+        if current_sum > best:
+            choice = i
+            best = current_sum
+    return choice   
+
 while run:
     print(turn)
     turn +=1
@@ -30,22 +44,14 @@ while run:
 
         if not player.isDone:
             matrix = bot.convert_matrix_to_nparray(board.matrix)
-            possible_pieces, possible_places, possible_plays_indices = bot.get_available_actions(matrix, player)
+
+            possible_places, possible_plays_indices, possible_pieces = bot.get_available_actions(matrix, player)
+            
             if len(possible_plays_indices) == 0:
                 player.isDone = True
             else:
                 # Random play right now.
-                best = 0
-                choice = 0
-                best_reward = None
-
-                for i in range(len(possible_places)):
-                    reward = bot.estimate_rewards(matrix, possible_places[i], bot.convert_color_to_number(player.c))
-                    current_sum = sum([x * y for x, y in zip(weights, reward)])
-                    if current_sum > best:
-                        choice = i
-                        best = current_sum
-                        best_reward = reward
+                choice = choose_move(matrix, possible_places, bot.convert_color_to_number(player.c))
 
                 # rand_index = bot.random_index(possible_plays_indices)
                 pkey, pindex = possible_plays_indices[choice]
