@@ -288,4 +288,25 @@ def selectBotMove(board, player):
 
 
                 
-                                                    
+
+def selectBotMoveTemplate(board, player): 
+    
+    weights = [10,10,1]
+    
+    if not player.isDone:
+        matrix = convert_matrix_to_nparray(board.matrix)
+        possible_places, possible_plays_indices, possible_pieces = get_available_actions(matrix, player)
+        if len(possible_plays_indices) == 0:
+            player.isDone = True
+        else:
+            #here you implement the algo that will choose the right move by picking the index.
+            #the input is the matrix, the player and the get available action output.
+
+            choice = 0
+
+            pkey, pindex = possible_plays_indices[choice]
+            absolute_coords = possible_places[choice]
+            piece_played = possible_pieces[choice]
+            play_coordinates(pkey, pindex, absolute_coords, piece_played, player, board)
+            if len(player.pieces) == 0:
+                player.isDone = True                                                   
