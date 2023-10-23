@@ -2,6 +2,10 @@ import numpy as np
 import random
 import copy
 import json
+try:
+    import src.reward as r
+except:
+    pass
 
 ################################################## UTILS ###
 def convert_color_to_number(color):
@@ -264,9 +268,12 @@ def play_coordinates(pkey,pindex,absolute_coords, piece_played, player, board):
  
     player.removePiece(pkey,i)
 
-def selectBotMove(board, player):
+def random_choice(possible_places):
+    choice = random_index(possible_places)
+    return choice
 
-    weights = [10,10,1]
+
+def selectBotMove(board, player, players = []):
     
     if not player.isDone:
         matrix = convert_matrix_to_nparray(board.matrix)
@@ -274,20 +281,14 @@ def selectBotMove(board, player):
         if len(possible_plays_indices) == 0:
             player.isDone = True
         else:
-            # Random play right now.
-            best = 0
-            choice = 0
-            best_reward = None
+            '''Change choice function here. return should be an index to choose from
+            in the possible_places, possible_plays_index, possible_pieces'''
+            
+            #choice = random_choice(possible_places)# Random play right now.
+            choice = r.choose_move(matrix,possible_places, convert_color_to_number(player.c))
 
-            for i in range(len(possible_places)):
-                reward = estimate_rewards(matrix, possible_places[i], convert_color_to_number(player.c))
-                current_sum = sum([x * y for x, y in zip(weights, reward)])
-                if current_sum > best:
-                    choice = i
-                    best = current_sum
-                    best_reward = reward
-            print(best_reward)
-            # rand_index = bot.random_index(possible_plays_indices)
+            ''' End of change'''
+
             pkey, pindex = possible_plays_indices[choice]
             absolute_coords = possible_places[choice]
             piece_played = possible_pieces[choice]

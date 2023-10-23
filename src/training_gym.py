@@ -14,12 +14,16 @@ import reward as r
 board = o.LinkedGrid(20,20, 20)
 players = []
 colors = ["r", "g", "b", "y"]
+weights = [[10,10,1],[10,10,1],[10,10,1],[3,2,1]]
 for p in range(4):
     players.append(Player(colors[p]))
 
+for p in range(4):
+    players[p].weights = weights[p] 
+
 
 run = True
-weights = [10,10,1]
+
 turn = 0
 
 def choose_move(matrix, possible_places, color):
@@ -52,7 +56,7 @@ while run:
                 player.isDone = True
             else:
                 # Random play right now.
-                choice = r.choose_move(matrix, possible_places, bot.convert_color_to_number(player.c))
+                choice = r.choose_move(matrix, possible_places, bot.convert_color_to_number(player.c),player.weights)
 
                 # rand_index = bot.random_index(possible_plays_indices)
                 pkey, pindex = possible_plays_indices[choice]

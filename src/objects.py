@@ -220,7 +220,8 @@ class Player:
             self.nextPiece("b")
         else:
             del self.pieces[pKey]
-            self.getPiece(1)
+            if len(self.pieces) > 0:
+                self.getPiece(1)
 
     def updateAllMoves(self,tuple_piece_to_remove):
         for key in self.all_playable_moves.keys():
