@@ -106,10 +106,13 @@ def check_absolute_coordinates(matrix, absolute_coords):
 
 ################################################# GENERATE Play
 
-def get_playable_conditions(matrix, color):
+def get_playable_conditions(matrix, color, only_corners = False ):
+    #will compute playable matrix if only corner is false otherwise will only return the corners. saves half the compute time
     rows, cols = len(matrix), len(matrix[0])
     playable_pos = []
-    playable_matrix = np.zeros((rows,cols))
+
+    if not only_corners:
+        playable_matrix = np.zeros((rows,cols))
 
     # Check diagonally adjacent positions
     diagonals = [(-1, -1), (-1, 1), (1, -1), (1, 1)]
@@ -120,11 +123,12 @@ def get_playable_conditions(matrix, color):
 
                 ## playable matrix
                 # Set the current position to 1 # Check left, right, top, and bottom positions
-                playable_matrix[i][j] = 1
-                for a, b in up_and_downs:
-                    new_i, new_j = i + a, j + b
-                    if 0 <= new_i < rows and 0 <= new_j < cols:
-                        playable_matrix[new_i][new_j] = 1
+                if not only_corners:
+                    playable_matrix[i][j] = 1
+                    for a, b in up_and_downs:
+                        new_i, new_j = i + a, j + b
+                        if 0 <= new_i < rows and 0 <= new_j < cols:
+                            playable_matrix[new_i][new_j] = 1
                         
                 ## playable pos
                 for x, y in diagonals:
@@ -141,9 +145,9 @@ def get_playable_conditions(matrix, color):
 
                             if append:
                                 playable_pos.append((new_i, new_j))
-
-            if matrix[i][j] != 0:
-               playable_matrix[i][j] = 1
+            if not only_corners:
+                if matrix[i][j] != 0:
+                    playable_matrix[i][j] = 1
     # Check board corners if no valid corners found
     if not playable_pos:
         corners = [(0, 0), (0, cols - 1), (rows - 1, 0), (rows - 1, cols - 1)]
@@ -152,7 +156,12 @@ def get_playable_conditions(matrix, color):
                 playable_pos.append((i, j))
                 break
     
-    return playable_matrix, playable_pos
+    if not only_corners:
+        return playable_matrix, playable_pos
+    else:
+        return playable_pos
+    
+    
 
 def get_available_actions(matrix, player):
     # Return a list of valid moves as a form of coordinates to play and piece indices

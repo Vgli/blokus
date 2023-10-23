@@ -9,7 +9,7 @@ from os.path import join
 import controllers as c
 import sys
 import time
-import icecream as ic
+import reward as r
 
 board = o.LinkedGrid(20,20, 20)
 players = []
@@ -26,13 +26,14 @@ def choose_move(matrix, possible_places, color):
     best = 0
     choice = 0          
     for i in range(len(possible_places)):
-        reward = bot.estimate_rewards(matrix, possible_places[i], color)
+        reward, square = bot.estimate_rewards(matrix, possible_places[i], color)
         current_sum = sum([x * y for x, y in zip(weights, reward)])
         if current_sum > best:
             choice = i
-            best = current_sum
+            best = current_sum, square
     return choice   
 
+start_time = time.time()
 while run:
     print(turn)
     turn +=1
@@ -51,7 +52,7 @@ while run:
                 player.isDone = True
             else:
                 # Random play right now.
-                choice = choose_move(matrix, possible_places, bot.convert_color_to_number(player.c))
+                choice = r.choose_move(matrix, possible_places, bot.convert_color_to_number(player.c))
 
                 # rand_index = bot.random_index(possible_plays_indices)
                 pkey, pindex = possible_plays_indices[choice]
@@ -62,7 +63,9 @@ while run:
                 if len(player.pieces) == 0:
                     player.isDone = True
 
-        
+end_time = time.time()
+execution_time = end_time - start_time
+print("Execution time: {:.6f} seconds".format(execution_time)) 
 
 for p in players:
     print(p.c, p.score)
