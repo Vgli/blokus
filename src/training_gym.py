@@ -37,12 +37,14 @@ for opening in piece_opening: #will do a loop of all pieces to start with to ben
     players = []
     colors = ["r", "g", "b", "y"]
     weights = [[10,10,1],[10,10,1],[10,10,1],[3,2,1]]
+    strategies = ['random','greedy','bcoca','bcoca']
     for p in range(4):
         players.append(Player(colors[p]))
 
 #Initialize player strategies for comparison
     for p in range(4):
         players[p].weights = weights[p]
+        players[p].strategy = strategies[p]
 
     run = True
     turn = 0
@@ -73,8 +75,7 @@ for opening in piece_opening: #will do a loop of all pieces to start with to ben
                     '''Change choice function here. return should be an index to choose from
                     in the possible_places, possible_plays_index, possible_pieces'''
                 
-                    #choice = random_choice(possible_places)# Random play right now.
-                    choice = r.choose_move(matrix,possible_places, bot.convert_color_to_number(player.c))
+                    choice = r.choose_move_strategy(matrix,possible_places, bot.convert_color_to_number(player.c),player.strategy)
 
                     ''' End of change'''
                     pkey, pindex = possible_plays_indices[choice]
