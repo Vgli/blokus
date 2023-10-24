@@ -16,8 +16,9 @@ board = o.LinkedGrid(20,20, 20)
 players = []
 colors = ["r", "g", "b", "y"]
 weights = [[10,10,1],[10,10,1],[10,10,1],[3,2,1]]
+all_playable_moves = bot.get_all_playable_moves('data/all_playable_moves.json')
 for p in range(4):
-    players.append(Player(colors[p]))
+    players.append(Player(colors[p], preload = False, all_playable_moves = {**all_playable_moves}))
 
 #Initialize player strategies for comparison
 for p in range(4):
@@ -37,9 +38,9 @@ for opening in piece_opening: #will do a loop of all pieces to start with to ben
     players = []
     colors = ["r", "g", "b", "y"]
     weights = [[10,10,1],[10,10,1],[10,10,1],[3,2,1]]
-    strategies = ['random','greedy','bcoca','bcoca']
+    strategies = ['random','greedy','oc','bcoca']
     for p in range(4):
-        players.append(Player(colors[p]))
+        players.append(Player(colors[p],preload = False, all_playable_moves = {**all_playable_moves}))
 
 #Initialize player strategies for comparison
     for p in range(4):
@@ -75,7 +76,7 @@ for opening in piece_opening: #will do a loop of all pieces to start with to ben
                     '''Change choice function here. return should be an index to choose from
                     in the possible_places, possible_plays_index, possible_pieces'''
                 
-                    choice = r.choose_move_strategy(matrix,possible_places, bot.convert_color_to_number(player.c),player.strategy)
+                    choice = r.choose_move_strategy(matrix,possible_places, bot.convert_color_to_number(player.c),strategy = player.strategy)
 
                     ''' End of change'''
                     pkey, pindex = possible_plays_indices[choice]

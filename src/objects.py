@@ -131,7 +131,7 @@ class Piece:
         return False
 
 class Player:
-    def __init__(self, color, is_bot=False):
+    def __init__(self, color, is_bot=False, preload = True, all_playable_moves = {}):
         self.c = color
         self.is_bot = is_bot
         self.pieces = dict()
@@ -154,7 +154,10 @@ class Player:
         self.curPieceKey = 1
         self.hasntPlayed = True
         self.isDone = False
-        self.all_playable_moves = bot.get_all_playable_moves('data/all_playable_moves.json')
+        if preload:
+            self.all_playable_moves = bot.get_all_playable_moves('data/all_playable_moves.json')
+        else:
+            self.all_playable_moves = all_playable_moves
     def setPos(self, pos):
         self.pos = pos
     def getPiece(self, num):
