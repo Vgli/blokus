@@ -11,6 +11,7 @@ import sys
 import time
 import reward as r
 
+# Initialize game
 board = o.LinkedGrid(20,20, 20)
 players = []
 colors = ["r", "g", "b", "y"]
@@ -18,61 +19,84 @@ weights = [[10,10,1],[10,10,1],[10,10,1],[3,2,1]]
 for p in range(4):
     players.append(Player(colors[p]))
 
+#Initialize player strategies for comparison
 for p in range(4):
-    players[p].weights = weights[p] 
+    players[p].weights = weights[p]
 
+#Initialize openings
+piece_opening = []
+for key in players[0].pieces.keys():
+    for i,piece in enumerate(players[0].pieces[key]):
+        piece_opening.append(piece.m)
+piece_opening.pop() #remove last element as it is the cross and it is not a valid start piece.
 
-run = True
+players_scores = [0,0,0,0]
+for opening in piece_opening: #will do a loop of all pieces to start with to benchmark the bot for different openings
+    # Initialize game
+    board = o.LinkedGrid(20,20, 20)
+    players = []
+    colors = ["r", "g", "b", "y"]
+    weights = [[10,10,1],[10,10,1],[10,10,1],[3,2,1]]
+    for p in range(4):
+        players.append(Player(colors[p]))
 
-turn = 0
+#Initialize player strategies for comparison
+    for p in range(4):
+        players[p].weights = weights[p]
 
-def choose_move(matrix, possible_places, color):
-    best = 0
-    choice = 0          
-    for i in range(len(possible_places)):
-        reward, square = bot.estimate_rewards(matrix, possible_places[i], color)
-        current_sum = sum([x * y for x, y in zip(weights, reward)])
-        if current_sum > best:
-            choice = i
-            best = current_sum, square
-    return choice   
+    run = True
+    turn = 0
+    start_time = time.time()
+    while run:
+        print(turn)
+        turn +=1
 
-start_time = time.time()
-while run:
-    print(turn)
-    turn +=1
+        for player in players:
+            if False not in [player.isDone for player in players]: # when all players are done, game stops.
+                run = False
+                break
 
-    for player in players:
-        if False not in [player.isDone for player in players]: # when all players are done, game stops.
-            run = False
-            break
-
-        if not player.isDone:
-            matrix = bot.convert_matrix_to_nparray(board.matrix)
-
-            possible_places, possible_plays_indices, possible_pieces = bot.get_available_actions(matrix, player)
-            
-            if len(possible_plays_indices) == 0:
-                player.isDone = True
-            else:
-                # Random play right now.
-                choice = r.choose_move(matrix, possible_places, bot.convert_color_to_number(player.c),player.weights)
-
-                # rand_index = bot.random_index(possible_plays_indices)
-                pkey, pindex = possible_plays_indices[choice]
-                absolute_coords = possible_places[choice]
-                piece_played = possible_pieces[choice]
-
-                bot.play_coordinates(pkey, pindex, absolute_coords, piece_played, player, board)
-                if len(player.pieces) == 0:
+            if not player.isDone:
+                matrix = bot.convert_matrix_to_nparray(board.matrix)
+                possible_places, possible_plays_indices, possible_pieces = bot.get_available_actions(matrix, player)
+                
+                
+                if turn == 1: # choose the opening
+                    choice = possible_pieces.index(opening.tolist())
+                    pkey, pindex = possible_plays_indices[choice]
+                    absolute_coords = possible_places[choice]
+                    piece_played = possible_pieces[choice]
+                    bot.play_coordinates(pkey, pindex, absolute_coords, piece_played, player, board)
+                elif len(possible_plays_indices) == 0:
                     player.isDone = True
+                else:
+                    '''Change choice function here. return should be an index to choose from
+                    in the possible_places, possible_plays_index, possible_pieces'''
+                
+                    #choice = random_choice(possible_places)# Random play right now.
+                    choice = r.choose_move(matrix,possible_places, bot.convert_color_to_number(player.c))
 
-end_time = time.time()
-execution_time = end_time - start_time
-print("Execution time: {:.6f} seconds".format(execution_time)) 
+                    ''' End of change'''
+                    pkey, pindex = possible_plays_indices[choice]
+                    absolute_coords = possible_places[choice]
+                    piece_played = possible_pieces[choice]
 
-for p in players:
-    print(p.c, p.score)
+                    bot.play_coordinates(pkey, pindex, absolute_coords, piece_played, player, board)
+                    if len(player.pieces) == 0:
+                        player.isDone = True
+
+    end_time = time.time()
+    execution_time = end_time - start_time
+    print("Execution time: {:.6f} seconds".format(execution_time))
+
+    for p in players:
+        print(p.c, p.score)
+
+    for i in range(len(players)):
+        players_scores[i]+= players[i].score
+
+for i in range(len(players)):
+    print(players[i].c, players_scores[i])
 
 import pygame
 import sys
