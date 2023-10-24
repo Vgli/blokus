@@ -31,6 +31,8 @@ for key in players[0].pieces.keys():
         piece_opening.append(piece.m)
 piece_opening.pop() #remove last element as it is the cross and it is not a valid start piece.
 
+
+'''Here starts the benchmarking'''
 players_scores = [0,0,0,0]
 for opening in piece_opening: #will do a loop of all pieces to start with to benchmark the bot for different openings
     # Initialize game
@@ -76,7 +78,7 @@ for opening in piece_opening: #will do a loop of all pieces to start with to ben
                     '''Change choice function here. return should be an index to choose from
                     in the possible_places, possible_plays_index, possible_pieces'''
                 
-                    choice = r.choose_move_strategy(matrix,possible_places, bot.convert_color_to_number(player.c),strategy = player.strategy)
+                    choice = r.choose_move_strategy(matrix,possible_places, bot.convert_color_to_number(player.c), players, strategy = player.strategy)
 
                     ''' End of change'''
                     pkey, pindex = possible_plays_indices[choice]

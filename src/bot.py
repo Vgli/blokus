@@ -191,11 +191,84 @@ def get_available_actions(matrix, player):
 
 ####################################################### REWARDS
 
-def get_number_of_blocked_corners(old_matrix, new_matrix, color):
-    '''Returns the number of blocked corners for a player after a given move is played'''
-    #return len(get_playable_pos(old_matrix,color))-len(get_playable_pos(new_matrix,color))
+def get_number_of_corners(matrix, absolute_coords, color, corners):
+    '''This function calculates the change in the number of corners occupied after a move is played by a player of a specific color.
 
-    return len(get_playable_conditions(old_matrix,color)[1])-len(get_playable_conditions(new_matrix,color)[1])
+    Parameters:
+    matrix (2D list): The game board matrix.
+    absolute_coords (list of tuples): Absolute coordinates where a piece is being placed on the board.
+    color (int): The color code of the player making the move.
+    corners (dictionary): A dictionary containing corner coordinates for each player color.
+
+    Returns:
+    int: The difference in the number of corners occupied after the move.'''
+
+    rows, cols = len(matrix), len(matrix[0])
+    added_corners = 0
+    removed_corners = 0
+    diagonals = [(-1, -1), (-1, 1), (1, -1), (1, 1)]
+    laterals = [(0, -1), (0, 1), (-1, 0), (1, 0)]
+    
+    for coord in absolute_coords:
+        if coord is not None:
+            i,j = coord
+            for x, y in diagonals:
+                    new_i, new_j = i + x, j + y
+                    if 0 <= new_i < rows and 0 <= new_j < cols:
+                        if matrix[new_i][new_j] == 0:
+                            append = True
+                            for a, b in laterals:    
+                            # Check for valid corners
+                                if 0 <= new_i+a < rows and 0 <= new_j+b < cols:
+                                    if (matrix[new_i+a][new_j+b] == color) or ([new_i+a,new_j+b] in absolute_coords):
+                                        append = False
+                                        break
+                            #Check if corner already exists
+                            if (new_i,new_j) in corners[color]:
+                                 append = False
+
+                            if append:
+                                added_corners += 1
+
+    for coord in corners[color]:
+        i,j = coord
+        remove = False
+        #Check if a corner has been occupied
+        if [i,j] in absolute_coords:
+            remove = True
+        
+            
+        for a, b in laterals:
+        # Check if squares surrounding corner have been occupied
+                if [i+a,j+b] in absolute_coords:
+                    remove = True
+                    break
+        if remove:
+            removed_corners += 1
+
+
+    return added_corners - removed_corners
+    
+
+def get_number_of_blocked_corners(corners, absolute_coords, color):
+    '''This function calculates the number of corners blocked for a player after a given move is played.
+
+    Parameters:
+    corners (dictionary): A dictionary containing corner coordinates for each player color.
+    absolute_coords (list of tuples): Absolute coordinates where a piece is being placed on the board.
+    color (int): The color code of the player making the move.
+
+    Returns:
+    int: The number of opponent corners blocked for that move.'''
+
+    blocked_corners = 0
+    for c in range(1,5):
+        if c!= color:
+                for coord in absolute_coords:
+                        if  coord is not None and tuple(coord) in corners[c]:
+                            blocked_corners+=1
+                            break
+    return blocked_corners
 
 def matrix_with_placed_piece(matrix, absolute_coords, color):
 
@@ -206,50 +279,42 @@ def matrix_with_placed_piece(matrix, absolute_coords, color):
                 new_matrix[abs_coord[0]][abs_coord[1]] = color
     return new_matrix
 
-def get_area_change(old_matrix, new_matrix, color):
-    # old area
-    indices = np.where(old_matrix == color)
-    if np.size(indices) > 0:
-    # Get the smallest and largest indices for the specified value
-        x_width =  np.abs(np.min(indices[0])-np.max(indices[0]))
-        y_width = np.abs(np.min(indices[1])-np.max(indices[1]))
-        old_area = x_width*y_width
-    else:
+def get_area_change(old_square, absolute_coords):
+    '''This function calculates the change in area on the game board occupied by a player's pieces after a move is played.
+
+    Parameters:
+    old_square (tuple): A tuple representing the previous area occupied by the player on the game board.
+    absolute_coords (list of tuples): Absolute coordinates where a piece is being placed on the board.
+
+    Returns:
+    int: The difference in area occupied by the player's pieces after the move.
+    tuple: Updated square area occupied by the player on the game board.'''
+
+    xs = [sublist[0] for sublist in absolute_coords if sublist is not None]
+    ys = [sublist[1] for sublist in absolute_coords if sublist is not None]
+
+    if len(old_square) == 0:
         old_area = 0
+        x = (min(xs),max(xs))
+        y = (min(ys),max(ys))
+        new_area = np.abs((x[0]-x[1])*(y[0]-y[1]))
 
-    #new area
-    indices = np.where(new_matrix == color)
-    # Get the smallest and largest indices for the specified value
-    x_width =  np.abs(np.min(indices[0])-np.max(indices[0]))
-    y_width = np.abs(np.min(indices[1])-np.max(indices[1]))
-
-    new_area = x_width*y_width
-    return new_area - old_area
-
-
-def estimate_rewards(matrix, absolute_coords, color):
-    colors = [1,2,3,4]
-    colors.remove(color)
-    new_matrix = matrix_with_placed_piece(matrix, absolute_coords,color)
-    reward = []
-    stolen_corners = 0
-    for c in colors:
-        stolen_corners += get_number_of_blocked_corners(matrix, new_matrix, c)
-    reward.append(stolen_corners)
-    reward.append(-1*get_number_of_blocked_corners(matrix, new_matrix, color)) # negative value for own color. you want to add some.
-    reward.append(get_area_change(matrix, new_matrix, color))
-
-    return reward
-
-def check_center_occupancy(matrix, player, number_of_moves):
-    """Goal is to check whether or not the player has reach the center area within a given number of moves."""
-    center = [8,9,10,11]
-    colors_center = [matrix[i][j].color for i in center for j in center] # center square of 4x4
-    num_of_pieces = sum(len(player.pieces[key]) for key in player.pieces.keys())
-    if player.c in colors_center and num_of_pieces > 21-number_of_moves:
-        return True
     else:
-        return False
+        x,y = old_square
+        old_area = np.abs((x[0]-x[1])*(y[0]-y[1]))
+        #update the square
+        if min(xs)<x[0]:
+            x[0] = min(xs)
+        if max(xs)>x[1]:
+            x[1] = max(xs)
+        if min(ys)<y[0]:
+            y[0] = min(ys)
+        if max(ys)>y[1]:
+            y[1] = max(ys)
+        
+        new_area = np.abs((x[0]-x[1])*(y[0]-y[1]))
+
+    return new_area - old_area, (x,y)
 
 ############################################# PLAY
 
@@ -284,8 +349,7 @@ def selectBotMove(board, player, players = []):
             '''Change choice function here. return should be an index to choose from
             in the possible_places, possible_plays_index, possible_pieces'''
             
-            #choice = random_choice(possible_places)# Random play right now.
-            choice = r.choose_move(matrix,possible_places, convert_color_to_number(player.c))
+            choice = random_choice(possible_places)# Random play right now.
 
             ''' End of change'''
 
