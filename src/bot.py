@@ -16,7 +16,7 @@ def convert_color_to_number(color):
 def convert_matrix_to_nparray(matrix):
     colors = {"r":1, "g":2, "b":3, "y":4} 
     rows, cols = np.shape(matrix)
-    array = np.zeros((rows,cols), dtype=int)
+    array = np.zeros((rows,cols), dtype=np.int8)
     for i in range(rows):
         for j in range(cols):
             c = matrix[i][j].color
@@ -30,10 +30,11 @@ def random_index(my_list):
     return random.randint(0, len(my_list) - 1)
 
 def generate_all_playable_moves(matrix,player,path = 'data/all_playable_moves.json'):
-    playable_board, playable_pos = get_playable_conditions((matrix),convert_color_to_number(player.c))
+    playable_board, playable_pos = get_playable_conditions(matrix,convert_color_to_number(player.c))
     playable_pos = [(i,j) for i in range(20) for j in range(20)]
+    all_pos_play = {(i,j):{} for i in range(20) for j in range(20)}
 
-    all_pos_play = {}
+    piece_num = 0
     for pkey in player.pieces.keys():
         for pindex in range(len(player.pieces[pkey])):
             piece = player.pieces[pkey][pindex].m
@@ -45,22 +46,27 @@ def generate_all_playable_moves(matrix,player,path = 'data/all_playable_moves.js
                             relative_coords = get_piece_relative_coordinates(p, i,j)
                             absolute_coords = get_absolute_coordinates(position, relative_coords)
                             if position in absolute_coords:
-                                if position not in all_pos_play.keys():
-                                    all_pos_play[position] = []
+                                if piece_num not in all_pos_play[position].keys():
+                                    all_pos_play[position][piece_num] = []
                                     
                                 if check_absolute_coordinates(playable_board, absolute_coords):
-                                    if [(pkey,pindex),absolute_coords] not in all_pos_play[position]:
-                                        all_pos_play[position].append([(pkey,pindex),absolute_coords,piece])
+                                    if [(pkey,pindex),absolute_coords] not in all_pos_play[position][piece_num]:
+                                        all_pos_play[position][piece_num].append([(pkey,pindex),absolute_coords])
+            piece_num+=1
     string_keys_dict = {str(key): value for key, value in all_pos_play.items()}
-    # Open the file in write mode and use json.dump() to save the list as a JSON file
+        # Open the file in write mode and use json.dump() to save the list as a JSON file
     with open(path, 'w') as json_file:
         json.dump(string_keys_dict, json_file)
+
 
 def get_all_playable_moves(file_path = 'data/all_playable_moves.json'):
     with open(file_path, 'r') as json_file:
         string_keys_dict = json.load(json_file)
     # Convert string keys back to tuples
     loaded_dict = {tuple(eval(key)): value for key, value in string_keys_dict.items()}
+
+    for pos in loaded_dict.keys():
+        loaded_dict[pos] = {int(eval(key)): value for key, value in loaded_dict[pos].items()}
     return loaded_dict
 
 ################################################### PIECE Handling ###
@@ -89,8 +95,6 @@ def get_absolute_coordinates(position, relative_coords):
             if rel_coord is not None:
                 abs_coord = (r + rel_coord[0], c + rel_coord[1])
                 absolute_coords.append(abs_coord)
-            else:
-                absolute_coords.append(None)
     return absolute_coords
 
 def check_absolute_coordinates(matrix, absolute_coords):
@@ -174,17 +178,18 @@ def get_available_actions(matrix, player):
     possible_pieces = []
     playable_board, playable_pos = get_playable_conditions(matrix,convert_color_to_number(player.c))
     for position in playable_pos:
-        to_pop = []
-        for i, move in enumerate(player.all_playable_moves[position]):
-            absolute_coords = move[1]
-            if check_absolute_coordinates(playable_board, absolute_coords):
-                possible_places.append(absolute_coords)
-                possible_plays_indices.append(move[0])
-                possible_pieces.append(move[2])
-            else:
-                to_pop.append(i)
-        for i in reversed(to_pop):
-            player.all_playable_moves[position].pop(i)
+        for p_num in player.all_playable_moves[position].keys():
+            to_pop = []
+            for i, move in enumerate(player.all_playable_moves[position][p_num]):
+                absolute_coords = move[1]
+                if check_absolute_coordinates(playable_board, absolute_coords):
+                    possible_places.append(absolute_coords)
+                    possible_plays_indices.append(move[0])
+                    possible_pieces.append(p_num)
+                else:
+                    to_pop.append(i)
+            for i in reversed(to_pop):
+                player.all_playable_moves[position][p_num].pop(i)
                                     
     return possible_places, possible_plays_indices, possible_pieces
 
@@ -267,12 +272,12 @@ def get_number_of_blocked_corners(corners, absolute_coords, color):
                 for coord in absolute_coords:
                         if  coord is not None and tuple(coord) in corners[c]:
                             blocked_corners+=1
-                            break
+                            break #is this break needed or causing problems? to test.
     return blocked_corners
 
 def matrix_with_placed_piece(matrix, absolute_coords, color):
 
-    new_matrix = copy.deepcopy(matrix)
+    new_matrix = np.array(matrix, copy = True)
     
     for abs_coord in absolute_coords:
         if abs_coord is not None:
@@ -318,17 +323,17 @@ def get_area_change(old_square, absolute_coords):
 
 ############################################# PLAY
 
-def play_coordinates(pkey,pindex,absolute_coords, piece_played, player, board):
+def play_coordinates(pkey,pindex,absolute_coords, piece_num, player, board):
     for abs_coord in absolute_coords:
         if abs_coord is not None:
             board.matrix[abs_coord[0]][abs_coord[1]].colorize(player.c)
     
-    player.updateAllMoves((pkey,pindex))
+    player.updateAllMoves(piece_num)
 
     #find matching piece index of piece_played to remove
         #retrieve piece shape
     for i, piece in enumerate(player.pieces[pkey]):
-        if piece.m.tolist() == piece_played:
+        if piece.num == piece_num:
             break
  
     player.removePiece(pkey,i)
@@ -349,7 +354,8 @@ def selectBotMove(board, player, players = []):
             '''Change choice function here. return should be an index to choose from
             in the possible_places, possible_plays_index, possible_pieces'''
             
-            choice = random_choice(possible_places)# Random play right now.
+            #choice = random_choice(possible_places)# Random play right now.
+            choice = r.choose_move_strategy(matrix,possible_places,convert_color_to_number(player.c),players,strategy='bcocap')
 
             ''' End of change'''
 

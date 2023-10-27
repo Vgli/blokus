@@ -9,7 +9,7 @@ import src.objects as o
 
 def init(evManager):
     o.createBoard()
-    o.createPlayers(1,3, evManager)
+    o.createPlayers(2,2, evManager)
 
 def main():
     pygame.init()

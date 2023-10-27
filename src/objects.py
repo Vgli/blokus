@@ -40,10 +40,11 @@ class LinkedGrid:
                 self.matrix[h].append(LinkedGridNode(nodeUp,nodeLeft,pos))
 
 class Piece:
-    def __init__(self, matrix, player):
+    def __init__(self, matrix, player, num):
         self.player = player
         self.c = player.c
         self.m = np.array(matrix)
+        self.num = num
     def fixPos(self):
         #add player position to piece array dimensions
         botright = self.player.pos + self.m.shape[::-1]
@@ -138,6 +139,7 @@ class Player:
         self.score = 0
         self.pos = np.array([0,0])
         self.start_pos = tuple()
+        num = 0
         with open("data/pieces.blok", "r") as f:
             for line in f:
                 l = eval(line.rstrip())
@@ -146,9 +148,10 @@ class Player:
                     if s not in self.pieces:
                         self.pieces[s] = []
                 elif isinstance(l,list):
-                    l = Piece(l, self)
+                    l = Piece(l, self,num)
                     self.pieces[s].append(l)
                     self.score -= s
+                    num+=1
         self.curPiece = self.pieces[1][0]
         self.curPieceIndex = 0
         self.curPieceKey = 1
@@ -226,9 +229,9 @@ class Player:
             if len(self.pieces) > 0:
                 self.getPiece(1)
 
-    def updateAllMoves(self,tuple_piece_to_remove):
+    def updateAllMoves(self,piece_to_remove):
         for key in self.all_playable_moves.keys():
-            self.all_playable_moves[key] = [sublist for sublist in self.all_playable_moves[key] if sublist[0] != list(tuple_piece_to_remove)]
+            del self.all_playable_moves[key][piece_to_remove]
 
     def performBotAction(self):
         bot.selectBotMove(board, self)

@@ -17,19 +17,9 @@ players = []
 colors = ["r", "g", "b", "y"]
 weights = [[10,10,1],[10,10,1],[10,10,1],[3,2,1]]
 all_playable_moves = bot.get_all_playable_moves('data/all_playable_moves.json')
-for p in range(4):
-    players.append(Player(colors[p], preload = False, all_playable_moves = {**all_playable_moves}))
-
-#Initialize player strategies for comparison
-for p in range(4):
-    players[p].weights = weights[p]
 
 #Initialize openings
-piece_opening = []
-for key in players[0].pieces.keys():
-    for i,piece in enumerate(players[0].pieces[key]):
-        piece_opening.append(piece.m)
-piece_opening.pop() #remove last element as it is the cross and it is not a valid start piece.
+piece_opening = [i for i in range(0,20)]
 
 
 '''Here starts the benchmarking'''
@@ -39,10 +29,10 @@ for opening in piece_opening: #will do a loop of all pieces to start with to ben
     board = o.LinkedGrid(20,20, 20)
     players = []
     colors = ["r", "g", "b", "y"]
-    weights = [[10,10,1],[10,10,1],[10,10,1],[3,2,1]]
-    strategies = ['random','greedy','oc','bcoca']
+    #weights = [[10,10,1],[10,10,1],[10,10,1],[3,2,1]]
+    strategies = ['random','greedy','oc','bcocap']
     for p in range(4):
-        players.append(Player(colors[p],preload = False, all_playable_moves = {**all_playable_moves}))
+        players.append(Player(colors[p]))
 
 #Initialize player strategies for comparison
     for p in range(4):
@@ -64,10 +54,8 @@ for opening in piece_opening: #will do a loop of all pieces to start with to ben
             if not player.isDone:
                 matrix = bot.convert_matrix_to_nparray(board.matrix)
                 possible_places, possible_plays_indices, possible_pieces = bot.get_available_actions(matrix, player)
-                
-                
                 if turn == 1: # choose the opening
-                    choice = possible_pieces.index(opening.tolist())
+                    choice = possible_pieces.index(opening)
                     pkey, pindex = possible_plays_indices[choice]
                     absolute_coords = possible_places[choice]
                     piece_played = possible_pieces[choice]
