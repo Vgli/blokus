@@ -10,6 +10,7 @@ import controllers as c
 import sys
 import time
 import reward as r
+import marshal
 
 # Initialize game
 board = o.LinkedGrid(20,20, 20)
@@ -32,7 +33,7 @@ for opening in piece_opening: #will do a loop of all pieces to start with to ben
     #weights = [[10,10,1],[10,10,1],[10,10,1],[3,2,1]]
     strategies = ['random','greedy','oc','bcocap']
     for p in range(4):
-        players.append(Player(colors[p]))
+        players.append(Player(colors[p], preload=False, all_playable_moves= marshal.loads(marshal.dumps(all_playable_moves,-1))))
 
 #Initialize player strategies for comparison
     for p in range(4):

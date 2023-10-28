@@ -171,14 +171,18 @@ def get_playable_conditions(matrix, color, only_corners = False ):
     
     
 
-def get_available_actions(matrix, player):
+def get_available_actions(matrix, player, auto_update = True, available_pieces = {}):
     # Return a list of valid moves as a form of coordinates to play and piece indices
     possible_plays_indices = []
     possible_places = []
     possible_pieces = []
     playable_board, playable_pos = get_playable_conditions(matrix,convert_color_to_number(player.c))
     for position in playable_pos:
-        for p_num in player.all_playable_moves[position].keys():
+        if len(available_pieces) == 0:
+            p_to_iter = player.all_playable_moves[position].keys()
+        else:
+            p_to_iter = set(player.all_playable_moves[position].keys()).intersection(available_pieces)
+        for p_num in p_to_iter:
             to_pop = []
             for i, move in enumerate(player.all_playable_moves[position][p_num]):
                 absolute_coords = move[1]
@@ -188,9 +192,9 @@ def get_available_actions(matrix, player):
                     possible_pieces.append(p_num)
                 else:
                     to_pop.append(i)
-            for i in reversed(to_pop):
-                player.all_playable_moves[position][p_num].pop(i)
-                                    
+            if auto_update:
+                for i in reversed(to_pop):
+                    player.all_playable_moves[position][p_num].pop(i)                           
     return possible_places, possible_plays_indices, possible_pieces
 
 
