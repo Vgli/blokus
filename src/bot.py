@@ -358,8 +358,8 @@ def selectBotMove(board, player, players = []):
             '''Change choice function here. return should be an index to choose from
             in the possible_places, possible_plays_index, possible_pieces'''
             
-            #choice = random_choice(possible_places)# Random play right now.
-            choice = r.choose_move_strategy(matrix,possible_places,possible_pieces, convert_color_to_number(player.c),players,strategy='bcocap_depth1')
+            choice = random_choice(possible_places)# Random play right now.
+            #choice = r.choose_move_strategy(matrix,possible_places,possible_pieces, convert_color_to_number(player.c),players,strategy='bcocap_depth1')
 
             ''' End of change'''
 
