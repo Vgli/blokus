@@ -215,15 +215,17 @@ class Player:
         pIn = self.curPieceIndex
         self.score += pKey
         del self.pieces[pKey][pIn]
-        
+
         if self.pieces[pKey]:
             self.nextPiece("b")
         else:
             del self.pieces[pKey]
-            self.getPiece(1)
+            if len(self.pieces.keys()) == 0:
+                self.isDone = True
+            else:
+                self.getPiece(1)
         
-        if len(self.pieces.keys()) == 0:
-            self.isDone = True
+        
     
     def removePiece(self, pKey, pIn):
         self.score += pKey
