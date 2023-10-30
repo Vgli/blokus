@@ -139,6 +139,7 @@ class Player:
         self.score = 0
         self.pos = np.array([0,0])
         self.start_pos = tuple()
+        self.available_pieces = [0]
         num = 0
         with open("data/pieces.blok", "r") as f:
             for line in f:
@@ -152,6 +153,7 @@ class Player:
                     self.pieces[s].append(l)
                     self.score -= s
                     num+=1
+                    self.available_pieces.append(num)
         self.curPiece = self.pieces[1][0]
         self.curPieceIndex = 0
         self.curPieceKey = 1
@@ -213,11 +215,15 @@ class Player:
         pIn = self.curPieceIndex
         self.score += pKey
         del self.pieces[pKey][pIn]
+        
         if self.pieces[pKey]:
             self.nextPiece("b")
         else:
             del self.pieces[pKey]
             self.getPiece(1)
+        
+        if len(self.pieces.keys()) == 0:
+            self.isDone = True
     
     def removePiece(self, pKey, pIn):
         self.score += pKey
@@ -232,6 +238,7 @@ class Player:
     def updateAllMoves(self,piece_to_remove):
         for key in self.all_playable_moves.keys():
             del self.all_playable_moves[key][piece_to_remove]
+        self.available_pieces.remove(piece_to_remove)
 
     def performBotAction(self):
         bot.selectBotMove(board, self)
@@ -255,28 +262,47 @@ class Players:
         self.pieces = []
         self.res = 0
 
+    def is_game_over(self):
+        print(False not in [player.isDone for player in self.players])
+        return False not in [player.isDone for player in self.players]
+    
     def nextTurn(self):
         self.curI += 1
+        print([player.isDone for player in self.players])
         if self.curI >= len(self.activePlayers):
             self.curI = 0
         self.cur = self.activePlayers[self.curI]
 
         if self.cur.is_bot:  # Check if the current player is a bot
             # Call bot logic function to get the bot's move
-            bot.selectBotMove(board, self.cur)  # Get position and piece from bot
+            bot.selectBotMove(board, self.cur,self.players)  # Get position and piece from bot
             self.evManager.Post(e.NextTurn())  # Continue the game after the bot's move
         else:
-            self.pieces = []  # Reset the pieces list for human players
+            print(len(self.activePlayers[self.curI].pieces))
+            if self.is_game_over():
+                self.evManager.Post(e.NextTurn())
+            else:
+                self.pieces = []  # Reset the pieces list for human players
     def resign(self):
         self.res += 1
+        self.activePlayers[self.curI].isDone = True
+        print(self.activePlayers[self.curI].isDone)
         if self.res >= 2:
             del self.activePlayers[self.curI]
             self.curI -= 1
             self.evManager.Post(e.NextTurn())
+    def print_final_score(self):
+         for player in self.players:
+            print('Player {} scored {}'.format(player.c, player.score))
+
     def Notify(self, event):
         if isinstance(event, e.NextTurn):
-            self.nextTurn()
-            self.res = 0
+            if not self.is_game_over():
+                self.nextTurn()
+                self.res = 0
+            else:
+                self.print_final_score()
+            
         elif isinstance(event, e.GetPiece):
             self.cur.getPiece(event.num)
             self.res = 0
@@ -303,7 +329,6 @@ class Players:
             self.res = 0
         elif isinstance(event, e.ResignEvent):
             self.resign()
-            print (self.res)
                 
             
 
