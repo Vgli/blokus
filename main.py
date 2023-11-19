@@ -18,7 +18,7 @@ def main():
     mouse = c.MouseController(evManager)
     tick = c.TickController(evManager)
     init(evManager)
-    pygameView = v.PygameView(evManager)
+    pygameView = v.PygameView(evManager, fullscreen=True)
 
     tick.run()
 

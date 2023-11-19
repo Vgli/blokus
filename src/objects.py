@@ -1,6 +1,7 @@
 import numpy as np
 from src import events as e
 from src import bot
+import random
 
 class LinkedGridNode:
     def __init__(self, u, l, pos):
@@ -252,12 +253,14 @@ class Players:
         self.evManager.RegisterListener(self)
         colors = ["r", "g", "b", "y"]
         remaining_colors = colors[num_human_players:]
+        self.game_started = False
         self.players = []
         for p in range(num_human_players):
             self.players.append(Player(colors[p]))
         for _ in range(num_bot_players):
             bot_color = remaining_colors.pop(0)  # Get the first remaining color for the bot
             self.players.append(Player(bot_color, is_bot=True))
+        #random.shuffle(self.players) # randomize start
         self.activePlayers = list(self.players)
         self.curI = 0
         self.cur = self.activePlayers[self.curI]
@@ -265,12 +268,11 @@ class Players:
         self.res = 0
 
     def is_game_over(self):
-        print(False not in [player.isDone for player in self.players])
         return False not in [player.isDone for player in self.players]
     
     def nextTurn(self):
         self.curI += 1
-        print([player.isDone for player in self.players])
+        #print([player.isDone for player in self.players])
         if self.curI >= len(self.activePlayers):
             self.curI = 0
         self.cur = self.activePlayers[self.curI]
@@ -298,6 +300,11 @@ class Players:
             print('Player {} scored {}'.format(player.c, player.score))
 
     def Notify(self, event):
+        if isinstance(event, e.StartGameEvent):
+            if self.game_started == False:
+                self.game_started = True
+                self.nextTurn()
+
         if isinstance(event, e.NextTurn):
             if not self.is_game_over():
                 self.nextTurn()

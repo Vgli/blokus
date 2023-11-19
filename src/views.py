@@ -1,25 +1,28 @@
 import src.events as e
 import src.objects as o
 import numpy as n
+import pygame
 from pygame import display, Surface, font, image, surfarray, Rect
 from os.path import join
 
 class PygameView:
-    def __init__(self, evManager):
+    def __init__(self, evManager, fullscreen = False):
         self.evManager = evManager
         self.evManager.RegisterListener(self)
-
-        self.window = display.set_mode((720,420))
+        if fullscreen:
+            self.window = display.set_mode((0, 0), pygame.NOFRAME | pygame.FULLSCREEN)
+        else:
+            self.window = display.set_mode((720,420))
         self.winsize = self.window.get_size()
         display.set_caption("Blokus")
         self.background = Surface( self.window.get_size() )
         self.background.fill( (255,255,255) )
         self.window.blit( self.background, (0,0) )
-        sbLoc = (len(o.board.matrix)*20+5, 0)
+        sbLoc = (int(self.winsize[1]) , 0)
         self.scorebox = {"surf": Surface((100,200)), "loc": sbLoc }
         self.scorebox["surf"].fill((255,255,255))
         self.font = font.Font(None, 40)
-        pbLoc = (sbLoc[0] + 100, 0)
+        pbLoc = (int(self.winsize[1]) + 100, 0)
         self.piecebox = self.window.subsurface(Rect(pbLoc,(200,420)))
         self.piecebox.fill((255,255,255))
         self.drawBoard()
@@ -28,13 +31,25 @@ class PygameView:
         self.drawPlayerPieces()
         display.flip()
     def drawBoard(self):
-        csize = o.board.csize
+        csize_x = self.winsize[0] / len(o.board.matrix[0])
+        csize_y = self.winsize[1] / len(o.board.matrix)
+        csize = min(csize_x, csize_y)
+        #update board cell size
+        o.board.csize = csize
         space = image.load(join("sprites", "space.png"))
         pieceImg = image.load(join("sprites", "piece.jpg"))
+
+        # Scale the background image to match the cell size
+        space = pygame.transform.scale(space, (int(csize), int(csize)))
+        pieceImg = pygame.transform.scale(pieceImg, (int(csize), int(csize)))
+
         pieceArray = surfarray.array3d(pieceImg)
+
         for row in o.board.matrix:
             for cell in row:
-                self.window.blit(space,(cell.x*csize,cell.y*csize))
+                x_pos = int(cell.x * csize)
+                y_pos = int(cell.y * csize)
+                self.window.blit(space, (x_pos, y_pos))
                 if cell.color:
                     piece = n.array(pieceArray)
                     if cell.color == "r":
@@ -46,12 +61,16 @@ class PygameView:
                     elif cell.color == "y":
                         piece[:,:,2] = 0
                     surfarray.blit_array(pieceImg, piece)
-                    self.window.blit(pieceImg,(cell.x*csize+1,cell.y*csize+1))
+
+                    x_piece_pos = int(cell.x * csize + 1)
+                    y_piece_pos = int(cell.y * csize + 1)
+                    self.window.blit(pieceImg,(x_piece_pos, y_piece_pos))
     
 
     def drawPiece(self):
         csize = o.board.csize
         pieceImg = image.load(join("sprites", "piece.jpg"))
+        pieceImg = pygame.transform.scale(pieceImg, (int(csize), int(csize)))
         p = o.players.cur
         pieceArray = surfarray.array3d(pieceImg)
         if p.c == "r":
