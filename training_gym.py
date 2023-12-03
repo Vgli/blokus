@@ -1,15 +1,15 @@
-import bot
-import objects as o
+import src.bot as bot
+import src.objects as o
 from src.objects import Player, Piece
 from pygame import display, Surface, font, image, surfarray, Rect
 import pygame
 import src.events as e
-import views as v
+import src.views as v
 from os.path import join
-import controllers as c
+import src.controllers as c
 import sys
 import time
-import reward as r
+import src.reward as r
 import marshal
 
 # Initialize game

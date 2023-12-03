@@ -7,7 +7,14 @@ class MouseController:
     def __init__(self, evManager):
         self.evManager = evManager
         self.evManager.RegisterListener(self)
+        self.menu = True
     def Notify(self, event):
+        if isinstance(event, e.ShowMenu):
+            if self.menu:
+                self.menu = False
+            else:
+                self.menu = True
+
         if isinstance(event, e.PygameEvent):
             event = event.ev
             ev = None
@@ -78,6 +85,10 @@ class KeyboardController:
                     ev = e.ResignEvent()
                 elif event.key == pygame.K_SPACE:
                     ev = e.StartGameEvent()
+                elif event.key == pygame.K_F5:
+                    ev = e.ToggleFullscreen()
+                elif event.key == pygame.K_m:
+                    ev = e.ShowMenu()
             if ev:
                 self.evManager.Post(ev)
 

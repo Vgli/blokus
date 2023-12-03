@@ -55,6 +55,18 @@ class ResignEvent(Event):
     def __init__(self):
         pass
 
+class ToggleFullscreen(Event):
+    def __init__(self):
+        pass
+
+class ShowMenu(Event):
+    def __init__(self):
+        pass
+
+class ToggleGameState(Event):
+    def __init__(self, new_state):
+        self.new_state = new_state
+
 class EventManager:
     """this object is responsible for coordinating most communication
     between the Model, View, and Controller.
@@ -80,3 +92,5 @@ class EventManager:
             #automatically removed, so we don't have 
             #to worry about it.
             listener.Notify( event )
+
+

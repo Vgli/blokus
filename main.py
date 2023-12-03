@@ -9,18 +9,12 @@ import src.objects as o
 
 def init(evManager):
     o.createBoard()
-    o.createPlayers(1,3, evManager)
+    o.createPlayers(3,1, evManager)
 
 def main():
     pygame.init()
     evManager = e.EventManager()
-    keyb = c.KeyboardController(evManager)
-    mouse = c.MouseController(evManager)
-    tick = c.TickController(evManager)
-    init(evManager)
     pygameView = v.PygameView(evManager, fullscreen=True)
-
-    tick.run()
 
     pygame.quit()
     sys.exit()

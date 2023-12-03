@@ -2,34 +2,92 @@ import src.events as e
 import src.objects as o
 import numpy as n
 import pygame
+import src.menu as m
 from pygame import display, Surface, font, image, surfarray, Rect
 from os.path import join
+import pygame_menu
 
 class PygameView:
-    def __init__(self, evManager, fullscreen = False):
+    def __init__(self, evManager, fullscreen = False, menu = True):
         self.evManager = evManager
         self.evManager.RegisterListener(self)
+        self.fullscreen = fullscreen
+        self.menu = menu
         if fullscreen:
-            self.window = display.set_mode((0, 0), pygame.NOFRAME | pygame.FULLSCREEN)
+            self.window = display.set_mode((0, 0), pygame.FULLSCREEN)
         else:
             self.window = display.set_mode((720,420))
-        self.winsize = self.window.get_size()
-        display.set_caption("Blokus")
-        self.background = Surface( self.window.get_size() )
-        self.background.fill( (255,255,255) )
-        self.window.blit( self.background, (0,0) )
-        sbLoc = (int(self.winsize[1]) , 0)
-        self.scorebox = {"surf": Surface((100,200)), "loc": sbLoc }
-        self.scorebox["surf"].fill((255,255,255))
-        self.font = font.Font(None, 40)
-        pbLoc = (int(self.winsize[1]) + 100, 0)
-        self.piecebox = self.window.subsurface(Rect(pbLoc,(200,420)))
-        self.piecebox.fill((255,255,255))
-        self.drawBoard()
-        self.drawPiece()
-        self.drawScores()
-        self.drawPlayerPieces()
-        display.flip()
+
+        if self.menu:
+            self.drawMenu(self.window)
+        else:
+
+            self.winsize = self.window.get_size()
+            display.set_caption("Blokus")
+            self.background = Surface( self.window.get_size() )
+            self.background.fill( (255,255,255) )
+            self.window.blit( self.background, (0,0) )
+            sbLoc = (int(self.winsize[1]) , 0)
+            self.scorebox = {"surf": Surface((100,200)), "loc": sbLoc }
+            self.scorebox["surf"].fill((255,255,255))
+            self.font = font.Font(None, 40)
+            pbLoc = (int(self.winsize[1]) + 100, 0)
+            self.piecebox = self.window.subsurface(Rect(pbLoc,(200,420)))
+            self.piecebox.fill((255,255,255))
+            self.drawBoard()
+            self.drawPiece()
+            self.drawScores()
+            self.drawPlayerPieces()
+            display.flip()
+
+    def toggleGameState(self, new_state):
+        self.game_state = new_state
+        if new_state == e.GameState.MENU:
+            self.drawMenu()
+        elif new_state == e.GameState.PLAYING:
+            o.players.update_pygameViewer(self)  # Update the PygameViewer for playing mode
+            # Add other logic for playing mode if needed
+
+    def drawMenu(self, window):
+        config = m.config()
+        print('printing menu')
+        menu = pygame_menu.Menu('Welcome', 400, 300, theme=pygame_menu.themes.THEME_BLUE)
+        menu.add.selector('Difficulty :', [('Level 1', 1), ('Level 2', 2), ('Level 3', 3), ('Level 4', 4), ('Level 5', 5)], onchange = config.set_difficulty)
+        menu.add.selector('Human Players :', [('1', 1), ('2', 2), ('3', 3),('4', 4)], onchange = config.set_num_players)
+        menu.add.button('Play', config.start_the_game, menu, accept_kwargs=True)
+        menu.add.button('Quit', pygame_menu.events.EXIT)
+        while self.menu:
+            menu.mainloop(window)
+
+
+    def updateView(self, fullscreen = False):
+        print('menu: ', self.menu)
+        if fullscreen:
+            self.window = display.set_mode((0, 0), pygame.FULLSCREEN)
+        else:
+            self.window = display.set_mode((720,420))
+
+        if self.menu:
+            self.drawMenu(self.window)
+        else:
+            self.winsize = self.window.get_size()
+            display.set_caption("Blokus")
+            self.background = Surface( self.window.get_size() )
+            self.background.fill( (255,255,255) )
+            self.window.blit( self.background, (0,0) )
+            sbLoc = (int(self.winsize[1]) , 0)
+            self.scorebox = {"surf": Surface((100,200)), "loc": sbLoc }
+            self.scorebox["surf"].fill((255,255,255))
+            self.font = font.Font(None, 40)
+            pbLoc = (int(self.winsize[1]) + 100, 0)
+            self.piecebox = self.window.subsurface(Rect(pbLoc,(200,420)))
+            self.piecebox.fill((255,255,255))
+            self.drawBoard()
+            self.drawPiece()
+            self.drawScores()
+            self.drawPlayerPieces()
+            display.flip()
+
     def drawBoard(self):
         csize_x = self.winsize[0] / len(o.board.matrix[0])
         csize_y = self.winsize[1] / len(o.board.matrix)
@@ -89,6 +147,7 @@ class PygameView:
                 if p.curPiece.m[r][c] == 1:
                     pos = n.array((c*csize,r*csize))
                     self.window.blit(pieceImg, bpos+pos)
+                    
     def drawScores(self):
         self.scorebox["surf"].fill((255,255,255))
         scores = []
@@ -97,6 +156,8 @@ class PygameView:
         for s in range(len(scores)):
              self.scorebox["surf"].blit(scores[s],(0,s*50))
         self.window.blit(self.scorebox["surf"],self.scorebox["loc"])
+
+
     def drawPlayerPieces(self):
         self.piecebox.fill((255,255,255))
         pieceImg = image.load(join("sprites", "piecesmall.jpg"))
@@ -148,14 +209,23 @@ class PygameView:
             bpos[1] = 0
     def Notify(self, event):
         if isinstance(event, (e.GetPiece, e.RotPiece, e.NextPiece, e.MovePiece, e.SwitchPiece)):
-            self.drawBoard()
-            self.drawPiece()
-            if isinstance(event, (e.GetPiece, e.NextPiece, e.SwitchPiece)):
-                self.drawPlayerPieces()
-            display.update()
+            if not self.menu:
+                self.drawBoard()
+                self.drawPiece()
+                if isinstance(event, (e.GetPiece, e.NextPiece, e.SwitchPiece)):
+                    self.drawPlayerPieces()
+                display.update()
         if isinstance(event, e.NextTurn):
-            self.drawBoard()
-            self.drawPiece()
-            self.drawPlayerPieces()
-            self.drawScores()
-            display.update()
+            if not self.menu:
+                self.drawBoard()
+                self.drawPiece()
+                self.drawPlayerPieces()
+                self.drawScores()
+                display.update()
+        if isinstance(event, (e.ToggleFullscreen, e.ShowMenu)):
+            if isinstance(event, e.ToggleFullscreen):
+                self.fullscreen = not self.fullscreen
+                self.updateView(self.fullscreen)
+            if isinstance(event, e.ShowMenu):
+                self.menu = not self.menu
+                self.updateView(self.fullscreen)

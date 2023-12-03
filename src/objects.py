@@ -1,6 +1,9 @@
 import numpy as np
 from src import events as e
 from src import bot
+from src import views as v
+from pygame import display
+import pygame
 import random
 
 class LinkedGridNode:
@@ -133,8 +136,9 @@ class Piece:
         return False
 
 class Player:
-    def __init__(self, color, is_bot=False, preload = True, all_playable_moves = {}):
+    def __init__(self, color, is_bot=False, preload = True, all_playable_moves = {}, strategy = 'bcocap_depth1'):
         self.c = color
+        self.strategy = strategy
         self.is_bot = is_bot
         self.pieces = dict()
         self.score = 0
@@ -243,29 +247,39 @@ class Player:
             del self.all_playable_moves[key][piece_to_remove]
         self.available_pieces.remove(piece_to_remove)
 
-    def performBotAction(self):
+    def performBotAction(self): #not sure this is used anymore
         bot.selectBotMove(board, self)
         
 
 class Players:
-    def __init__(self, num_human_players, num_bot_players, evManager):
+    def __init__(self, num_human_players, num_bot_players, evManager, pre_init = True, p_list = list()):
+        self.fullscreen = False
         self.evManager = evManager
+        self.pygameView = None
         self.evManager.RegisterListener(self)
         colors = ["r", "g", "b", "y"]
         remaining_colors = colors[num_human_players:]
         self.game_started = False
         self.players = []
-        for p in range(num_human_players):
-            self.players.append(Player(colors[p]))
-        for _ in range(num_bot_players):
-            bot_color = remaining_colors.pop(0)  # Get the first remaining color for the bot
-            self.players.append(Player(bot_color, is_bot=True))
+        if pre_init: #if you set init to False, you have to manually add the players
+            for p in range(num_human_players):
+                self.players.append(Player(colors[p]))
+            for _ in range(num_bot_players):
+                bot_color = remaining_colors.pop(0)  # Get the first remaining color for the bot
+                self.players.append(Player(bot_color, is_bot=True))
+        else:
+            for p in p_list:
+                self.players.append(p)
+        
         #random.shuffle(self.players) # randomize start
         self.activePlayers = list(self.players)
         self.curI = 0
         self.cur = self.activePlayers[self.curI]
         self.pieces = []
         self.res = 0
+    
+    def update_pygameViewer(self, pygameView): #this should not be needed
+        self.pygameView = pygameView
 
     def is_game_over(self):
         return False not in [player.isDone for player in self.players]
@@ -282,7 +296,6 @@ class Players:
             bot.selectBotMove(board, self.cur,self.players)  # Get position and piece from bot
             self.evManager.Post(e.NextTurn())  # Continue the game after the bot's move
         else:
-            print(len(self.activePlayers[self.curI].pieces))
             if self.is_game_over():
                 self.evManager.Post(e.NextTurn())
             else:
@@ -303,6 +316,7 @@ class Players:
         if isinstance(event, e.StartGameEvent):
             if self.game_started == False:
                 self.game_started = True
+                self.curI = -1
                 self.nextTurn()
 
         if isinstance(event, e.NextTurn):
@@ -338,12 +352,14 @@ class Players:
             self.res = 0
         elif isinstance(event, e.ResignEvent):
             self.resign()
+
+                
                 
             
 
 def createBoard(w=20,h=20, c=20):
     global board
     board = LinkedGrid(w,h,c)
-def createPlayers(num_human_players, num_bot_players, evManager):
+def createPlayers(num_human_players, num_bot_players, evManager, pre_init = True, p_list = list()):
     global players
-    players = Players(num_human_players, num_bot_players, evManager)
+    players = Players(num_human_players, num_bot_players, evManager, pre_init= pre_init, p_list = p_list )
